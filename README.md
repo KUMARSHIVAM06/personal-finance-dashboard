@@ -1,34 +1,51 @@
-# personal-finance-dashboard
-Personal finance tracking application built with React, Tailwind CSS, and Firebase for real-time authentication and database storage.
 # Personal Finance Dashboard
+**Tech:** Python · Flask · SQL (SQLite) · Power BI · Chart.js
 
-A modern, real-time personal finance tracking application built to help users monitor income, track daily expenses, and analyze budget trends effortlessly.
+Real-time dashboard jo income, expense aur savings track karta hai. Backend Flask REST API hai, data SQL database me rehta hai, aur frontend har 10 second me API se data sync karta hai. Same clean data Power BI me bhi load hota hai.
 
-## 🚀 Features
+## Architecture
+```
+Bank statement / CSV / manual entry
+        │  (Extract)
+        ▼
+data_pipeline.py ── clean, dedupe, auto-categorise ── (Transform)
+        │  (Load)
+        ▼
+finance.db (SQLite: transactions, budgets)
+        │
+        ├──► app.py (Flask REST API: /api/summary, /api/monthly-trend, ...)
+        │          └──► templates/index.html (Chart.js, auto-refresh 10s)
+        └──► data/clean_transactions.csv ──► Power BI report
+```
 
-- **Dashboard Overview:** Comprehensive summary of total balance, income, and overall expenses.
-- **Transaction Management:** Add, edit, and categorize daily expenses and income entries.
-- **Data Visualization:** Interactive charts and graphs to visualize spending habits over time.
-- **Real-Time Database:** Instant updates and persistent data storage powered by Firebase.
-- **Secure Authentication:** User sign-up and login integration using Firebase Auth.
-- **Responsive UI:** Clean, modern, and mobile-friendly design built with Tailwind CSS.
+## Run kaise kare
+```bash
+pip install -r requirements.txt
+python data_pipeline.py     # data generate + clean + DB me load
+python app.py               # browser: http://127.0.0.1:5000
+```
 
-## 🛠️ Tech Stack
+## API endpoints
+| Method | Endpoint | Kaam |
+|---|---|---|
+| GET | `/api/summary?month=YYYY-MM` | KPI: income, expense, savings, savings rate |
+| GET | `/api/monthly-trend` | Har month ka income/expense/savings |
+| GET | `/api/category-breakdown` | Category-wise kharcha |
+| GET | `/api/budget-status` | Budget vs actual |
+| GET | `/api/transactions?limit=10` | Recent transactions |
+| POST | `/api/transactions` | Naya transaction (auto-category) |
 
-- **Frontend:** React.js, Tailwind CSS
-- **Backend & Database:** Firebase (Firestore / Realtime Database)
-- **Authentication:** Firebase Authentication
-- **Icons & UI:** Lucide React / Heroicons
+Example:
+```bash
+curl -X POST http://127.0.0.1:5000/api/transactions -H "Content-Type: application/json" \
+     -d '{"description":"Swiggy order","amount":350,"txn_type":"debit"}'
+```
 
-## 📦 Getting Started
-
-### Prerequisites
-
-Make sure you have Node.js and npm installed on your machine.
-
-### Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone [https://github.com/KUMARSHIVAM06/personal-finance-dashboard.git](https://github.com/KUMARSHIVAM06/personal-finance-dashboard.git)
-   cd personal-finance-dashboard
+## Files
+- `data_pipeline.py` – ETL pipeline (extract → transform → load)
+- `app.py` – Flask REST API
+- `templates/index.html` – dashboard UI
+- `sql/schema.sql` – tables + indexes
+- `sql/analysis_queries.sql` – window functions, CTE, JOIN wali analysis queries
+- `POWER_BI_GUIDE.md` – Power BI report step by step
+- `data/` – raw aur clean CSV
